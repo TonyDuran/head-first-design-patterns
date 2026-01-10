@@ -6,6 +6,41 @@ This example demonstrates the **Strategy Pattern**, a behavioral design pattern 
 
 **Real-World Example**: A shopping cart that supports multiple payment methods (Credit Card, PayPal, Bitcoin, Apple Pay, Google Pay, etc.)
 
+## 🚀 Running the Application
+
+### Prerequisites
+
+```bash
+pip install -r requirements.txt
+```
+
+**Requirements**: FastAPI, Uvicorn, Python 3.7+
+
+### Option 1: Using Docker (Recommended)
+
+```bash
+# Build the Docker image
+docker build -t strategy-pattern-demo .
+
+# Run the container
+docker run -p 8000:8000 -p 8080:8080 strategy-pattern-demo
+
+# Access the application
+# Frontend: http://localhost:8080
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+### Option 2: Using the Run Script
+
+```bash
+cd strategy-pattern
+./run.sh
+
+# Frontend: http://localhost:8080
+# Backend API: http://localhost:8000
+```
+
 ## 🏗️ Pattern Structure
 
 ### Components
@@ -112,7 +147,6 @@ class BadShoppingCart:
         else:
             return {"success": False, "error": f"Unknown payment type: {payment_type}"}
 ```
-
 **Problems**:
 - ❌ **God Class**: All payment logic in one massive method
 - ❌ **Violates Open/Closed**: Must modify class to add new payment types
@@ -122,94 +156,6 @@ class BadShoppingCart:
 - ❌ **Difficult Maintenance**: Changes to one payment affect the whole class
 - ❌ **Code Duplication**: Similar logic repeated for each payment type
 
-## 🚀 Running the Application
-
-### Prerequisites
-
-```bash
-pip install -r requirements.txt
-```
-
-**Requirements**: FastAPI, Uvicorn, Python 3.7+
-
-### Option 1: Using Docker (Recommended)
-
-```bash
-# Build the Docker image
-docker build -t strategy-pattern-demo .
-
-# Run the container
-docker run -p 8000:8000 -p 8080:8080 strategy-pattern-demo
-
-# Access the application
-# Frontend: http://localhost:8080
-# Backend API: http://localhost:8000
-# API Docs: http://localhost:8000/docs
-```
-
-### Option 2: Using the Run Script
-
-```bash
-cd strategy-pattern
-./run.sh
-
-# Frontend: http://localhost:8080
-# Backend API: http://localhost:8000
-```
-
-### Option 3: Running Locally
-
-#### Backend (FastAPI)
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the backend
-cd backend
-python main.py
-
-# Backend will run on http://localhost:8000
-```
-
-#### Frontend (Vue.js)
-```bash
-# In a separate terminal, serve the frontend
-cd frontend
-python -m http.server 8080
-
-# Access at http://localhost:8080
-```
-
-## 🎮 How to Use
-
-1. **Browse Products**: View the 6 available products (Laptop, Smartphone, Headphones, Tablet, Smartwatch, Camera)
-2. **Add to Cart**: Click "Add to Cart" on items you want to purchase
-3. **Try the Live Demo**: Click the "Add New Payment Method" buttons (Apple Pay, Google Pay, Stripe, Square)
-   - **GOOD Example**: Watch how new payment methods are added instantly at runtime!
-   - **BAD Example**: See why it's impossible without modifying and restarting the server
-4. **Select Payment Method**: Choose from Credit Card, PayPal, Bitcoin, or any dynamically added methods
-5. **Enter Payment Details**: Form fields are pre-filled with fake data to save time
-6. **Toggle Pattern Mode**: Check the box to compare GOOD vs BAD implementations side-by-side
-7. **Checkout**: Click "Checkout Now" to process the payment
-8. **View Results**: See transaction details and educational insights about the pattern
-
-## 🏛️ Architecture
-
-```
-strategy-pattern/
-├── backend/
-│   ├── main.py                    # FastAPI application with REST endpoints
-│   ├── payment_strategies.py      # Strategy Pattern implementation (GOOD & BAD)
-│   └── __pycache__/               # Python cache
-├── frontend/
-│   ├── index.html                 # Vue.js single-page application
-│   └── intro.html                 # Redirect to index.html
-├── Dockerfile                     # Container configuration
-├── docker-compose.yml             # Docker Compose setup
-├── requirements.txt               # Python dependencies (FastAPI, Uvicorn)
-├── run.sh                         # Convenient startup script
-└── README.md                      # This file
-```
 
 ## 🔌 API Endpoints
 
@@ -221,38 +167,6 @@ strategy-pattern/
 - `DELETE /cart/{cart_id}` - Clear cart
 - `POST /checkout` - Process payment with selected strategy
 
-### Educational Features
-- `GET /available-payment-methods` - List available and registered payment methods
-- `POST /add-payment-method` - Dynamically add a new payment method (shows pattern benefits)
-- `GET /fake-data` - Get pre-filled test data for forms
-- `GET /pattern-info` - Get detailed information about the Strategy Pattern
-
-## 🎓 Educational Features
-
-### Interactive Comparison
-Toggle between implementations to see:
-- **✅ GOOD Example**: Strategy Pattern with proper encapsulation
-- **❌ BAD Example**: Without Strategy Pattern showing problems
-
-### Live Pattern Demonstration
-- **Add Payment Methods at Runtime**: Click buttons to add Apple Pay, Google Pay, Stripe, Square
-  - GOOD: Works instantly, no server restart!
-  - BAD: Requires code modification and server restart
-- See the Open/Closed Principle in action
-- Understand extensibility vs tight coupling
-
-### Code Structure Demonstration
-View in `backend/payment_strategies.py`:
-- Abstract Strategy interface (lines 13-20)
-- Concrete payment strategies (lines 23-119)
-- Context class using strategies (lines 122-130)
-- Anti-pattern comparison (lines 147-213)
-
-### Educational UI
-- Form fields auto-filled with fake data
-- Pattern benefits/problems shown after transactions
-- Side-by-side GOOD vs BAD comparison
-- Inline explanations of why each approach matters
 
 ## 🛠️ Technologies Used
 
@@ -293,17 +207,4 @@ View in `backend/payment_strategies.py`:
 - [Refactoring Guru - Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
 - [Strategy Pattern - Wikipedia](https://en.wikipedia.org/wiki/Strategy_pattern)
 - [SOLID Principles - Open/Closed Principle](https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle)
-
-## 🤝 Contributing
-
-This is an educational example. Feel free to:
-- Add more payment strategies (Apple Pay, Google Pay, etc.)
-- Enhance the UI and interactivity
-- Add more educational features
-- Improve documentation and code comments
-- Add unit tests for each strategy
-
-## 📝 License
-
-Part of the Head First Design Patterns educational repository.
 
