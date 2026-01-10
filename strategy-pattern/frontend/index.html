@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Pattern Demo - Payment Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .pattern-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .product-emoji {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .product-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            color: #667eea;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .add-btn {
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #764ba2;
+        }
+
+        .cart-items {
+            margin-top: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .cart-total {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            text-align: right;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .payment-methods {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .payment-option {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-option:hover {
+            border-color: #667eea;
+        }
+
+        .payment-option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .payment-option h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .form-group {
+            margin: 15px 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .checkout-btn:hover {
+            background: #764ba2;
+        }
+
+        .checkout-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            width: 100%;
+            padding: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .clear-btn:hover {
+            background: #c82333;
+        }
+
+        .toggle-pattern {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #ffc107;
+        }
+
+        .toggle-pattern input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .toggle-pattern label {
+            cursor: pointer;
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .result-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .result-success {
+            color: #28a745;
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-error {
+            color: #dc3545;
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .result-details h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .result-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .result-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-list li:last-child {
+            border-bottom: none;
+        }
+
+        .close-modal-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .close-modal-btn:hover {
+            background: #764ba2;
+        }
+
+        .pattern-comparison {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 30px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .comparison-box {
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .good-box {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        .bad-box {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+        }
+
+        .comparison-box h3 {
+            margin-bottom: 15px;
+        }
+
+        .comparison-box ul {
+            padding-left: 20px;
+        }
+
+        .comparison-box li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-cart-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <h1>🛒 Strategy Pattern Demo Store</h1>
+                <p>Learn the Strategy Pattern through a payment processing example</p>
+                <span class="pattern-badge">Behavioral Design Pattern</span>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Products Section -->
+                <div class="section">
+                    <h2>📦 Products</h2>
+                    <div class="products-grid">
+                        <div v-for="product in products" :key="product.id" class="product-card">
+                            <div class="product-emoji">{{ product.image }}</div>
+                            <div class="product-name">{{ product.name }}</div>
+                            <div class="product-price">${{ product.price.toFixed(2) }}</div>
+                            <button class="add-btn" @click="addToCart(product)">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Section -->
+                <div class="section">
+                    <h2>🛍️ Shopping Cart</h2>
+                    <div v-if="cart.items.length === 0" class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <p>Your cart is empty</p>
+                    </div>
+                    <div v-else>
+                        <div class="cart-items">
+                            <div v-for="(item, index) in cart.items" :key="index" class="cart-item">
+                                <div>
+                                    <strong>{{ item.name }}</strong>
+                                    <span> x{{ item.quantity }}</span>
+                                </div>
+                                <div>${{ (item.price * item.quantity).toFixed(2) }}</div>
+                            </div>
+                        </div>
+                        <div class="cart-total">
+                            Total: ${{ cart.total.toFixed(2) }}
+                        </div>
+                        <button class="clear-btn" @click="clearCart">Clear Cart</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="section" v-if="cart.items.length > 0">
+                <h2>💳 Payment Method</h2>
+                
+                <!-- Toggle Pattern Mode -->
+                <div class="toggle-pattern">
+                    <input type="checkbox" id="useBadExample" v-model="useBadExample">
+                    <label for="useBadExample">
+                        Show BAD example (without Strategy Pattern) - for educational comparison
+                    </label>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="payment-methods">
+                    <!-- Credit Card -->
+                    <div class="payment-option" 
+                         :class="{ selected: paymentMethod === 'credit_card' }"
+                         @click="paymentMethod = 'credit_card'">
+                        <h3>💳 Credit Card</h3>
+                        <div v-if="paymentMethod === 'credit_card'">
+                            <div class="form-group">
+                                <label>Card Number</label>
+                                <input v-model="creditCard.card_number" placeholder="1234 5678 9012 3456">
+                            </div>
+                            <div class="form-group">
+                                <label>Card Holder</label>
+                                <input v-model="creditCard.card_holder" placeholder="John Doe">
+                            </div>
+                            <div class="form-group">
+                                <label>CVV</label>
+                                <input v-model="creditCard.cvv" placeholder="123" maxlength="3">
+                            </div>
+                            <div class="form-group">
+                                <label>Expiry</label>
+                                <input v-model="creditCard.expiry" placeholder="MM/YY">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PayPal -->
+                    <div class="payment-option" 
+                         :class="{ selected: paymentMethod === 'paypal' }"
+                         @click="paymentMethod = 'paypal'">
+                        <h3>💰 PayPal</h3>
+                        <div v-if="paymentMethod === 'paypal'">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input v-model="paypal.email" type="email" placeholder="john@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input v-model="paypal.password" type="password" placeholder="********">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bitcoin -->
+                    <div class="payment-option" 
+                         :class="{ selected: paymentMethod === 'bitcoin' }"
+                         @click="paymentMethod = 'bitcoin'">
+                        <h3>₿ Bitcoin</h3>
+                        <div v-if="paymentMethod === 'bitcoin'">
+                            <div class="form-group">
+                                <label>Wallet Address</label>
+                                <input v-model="bitcoin.wallet_address" placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="checkout-btn" 
+                        @click="checkout" 
+                        :disabled="!paymentMethod || processing">
+                    {{ processing ? 'Processing...' : 'Checkout Now' }}
+                </button>
+            </div>
+
+            <!-- Pattern Comparison -->
+            <div class="pattern-comparison">
+                <h2>📚 Strategy Pattern: Good vs Bad</h2>
+                <div class="comparison-grid">
+                    <div class="comparison-box good-box">
+                        <h3>✅ WITH Strategy Pattern (GOOD)</h3>
+                        <ul>
+                            <li><strong>Encapsulation:</strong> Each payment method is in its own class</li>
+                            <li><strong>Open/Closed:</strong> Add new payment types without changing existing code</li>
+                            <li><strong>Testability:</strong> Easy to test each strategy independently</li>
+                            <li><strong>Flexibility:</strong> Switch payment methods at runtime</li>
+                            <li><strong>Maintainability:</strong> Changes to one payment method don't affect others</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-box bad-box">
+                        <h3>❌ WITHOUT Strategy Pattern (BAD)</h3>
+                        <ul>
+                            <li><strong>God Class:</strong> All payment logic in one place</li>
+                            <li><strong>Tight Coupling:</strong> Payment logic coupled to cart class</li>
+                            <li><strong>Hard to Extend:</strong> Must modify existing code to add new payment types</li>
+                            <li><strong>Complex Conditionals:</strong> Large if/else or switch statements</li>
+                            <li><strong>Testing Difficulty:</strong> Hard to test payment methods in isolation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Modal -->
+        <div v-if="showResult" class="result-modal" @click="showResult = false">
+            <div class="result-content" @click.stop>
+                <div v-if="result.success" class="result-success">✅</div>
+                <div v-else class="result-error">❌</div>
+                
+                <h2>{{ result.success ? 'Payment Successful!' : 'Payment Failed' }}</h2>
+                
+                <div class="result-details">
+                    <h4>Transaction Details</h4>
+                    <div class="result-list">
+                        <div><strong>Method:</strong> {{ result.method }}</div>
+                        <div v-if="result.transaction_id"><strong>Transaction ID:</strong> {{ result.transaction_id }}</div>
+                        <div v-if="result.amount"><strong>Amount:</strong> ${{ result.amount.toFixed(2) }}</div>
+                        <div v-if="result.btc_amount"><strong>BTC Amount:</strong> {{ result.btc_amount }} BTC</div>
+                        <div v-if="result.details"><strong>Details:</strong> {{ result.details }}</div>
+                    </div>
+                </div>
+
+                <div v-if="result.pattern_used" class="result-details">
+                    <h4>{{ result.pattern_used }}</h4>
+                    <ul v-if="result.benefits" class="result-list" style="color: #28a745;">
+                        <li v-for="benefit in result.benefits" :key="benefit">{{ benefit }}</li>
+                    </ul>
+                    <ul v-if="result.problems" class="result-list" style="color: #dc3545;">
+                        <li v-for="problem in result.problems" :key="problem">{{ problem }}</li>
+                    </ul>
+                </div>
+
+                <div v-if="result.error" class="result-details">
+                    <strong>Error:</strong> {{ result.error }}
+                </div>
+
+                <button class="close-modal-btn" @click="closeModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    products: [],
+                    cart: { items: [], total: 0 },
+                    cartId: 'user-' + Math.random().toString(36).substr(2, 9),
+                    paymentMethod: '',
+                    creditCard: {
+                        card_number: '',
+                        card_holder: '',
+                        cvv: '',
+                        expiry: ''
+                    },
+                    paypal: {
+                        email: '',
+                        password: ''
+                    },
+                    bitcoin: {
+                        wallet_address: ''
+                    },
+                    useBadExample: false,
+                    processing: false,
+                    showResult: false,
+                    result: {},
+                    apiUrl: 'http://localhost:8000'
+                }
+            },
+            async mounted() {
+                await this.loadProducts();
+            },
+            methods: {
+                async loadProducts() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/products`);
+                        this.products = response.data;
+                    } catch (error) {
+                        console.error('Error loading products:', error);
+                    }
+                },
+                async addToCart(product) {
+                    try {
+                        await axios.post(`${this.apiUrl}/cart/${this.cartId}/add`, {
+                            name: product.name,
+                            price: product.price,
+                            quantity: 1
+                        });
+                        await this.loadCart();
+                    } catch (error) {
+                        console.error('Error adding to cart:', error);
+                    }
+                },
+                async loadCart() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/cart/${this.cartId}`);
+                        this.cart = response.data;
+                    } catch (error) {
+                        console.error('Error loading cart:', error);
+                    }
+                },
+                async clearCart() {
+                    try {
+                        await axios.delete(`${this.apiUrl}/cart/${this.cartId}`);
+                        await this.loadCart();
+                        this.resetPaymentForms();
+                    } catch (error) {
+                        console.error('Error clearing cart:', error);
+                    }
+                },
+                async checkout() {
+                    this.processing = true;
+                    try {
+                        const payload = {
+                            cart_id: this.cartId,
+                            payment_method: this.paymentMethod,
+                            use_bad_example: this.useBadExample
+                        };
+
+                        if (this.paymentMethod === 'credit_card') {
+                            payload.credit_card = this.creditCard;
+                        } else if (this.paymentMethod === 'paypal') {
+                            payload.paypal = this.paypal;
+                        } else if (this.paymentMethod === 'bitcoin') {
+                            payload.bitcoin = this.bitcoin;
+                        }
+
+                        const response = await axios.post(`${this.apiUrl}/checkout`, payload);
+                        this.result = response.data;
+                        this.showResult = true;
+
+                        if (this.result.success) {
+                            await this.clearCart();
+                        }
+                    } catch (error) {
+                        console.error('Error during checkout:', error);
+                        this.result = {
+                            success: false,
+                            error: error.response?.data?.detail || 'An error occurred during checkout'
+                        };
+                        this.showResult = true;
+                    } finally {
+                        this.processing = false;
+                    }
+                },
+                closeModal() {
+                    this.showResult = false;
+                    this.result = {};
+                },
+                resetPaymentForms() {
+                    this.paymentMethod = '';
+                    this.creditCard = { card_number: '', card_holder: '', cvv: '', expiry: '' };
+                    this.paypal = { email: '', password: '' };
+                    this.bitcoin = { wallet_address: '' };
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
