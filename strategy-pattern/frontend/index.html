@@ -577,6 +577,19 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Dynamically Added Payment Methods -->
+                    <div v-for="method in registeredPaymentMethods"
+                         :key="method.id"
+                         class="payment-option"
+                         :class="{ selected: paymentMethod === method.id }"
+                         @click="paymentMethod = method.id">
+                        <h3>✨ {{ method.name }}</h3>
+                        <div v-if="paymentMethod === method.id">
+                            <p style="color: #667eea; font-weight: bold;">🎉 Dynamically added payment method!</p>
+                            <p style="color: #666; font-size: 0.9em;">This was added at runtime using the Strategy Pattern, no server restart needed!</p>
+                        </div>
+                    </div>
                 </div>
 
                 <button class="checkout-btn"
@@ -679,12 +692,21 @@
                     processing: false,
                     showResult: false,
                     result: {},
-                    apiUrl: 'http://localhost:8000',
+                    apiUrl: '',
                     availablePaymentMethods: [],
+                    registeredPaymentMethods: [],
                     paymentMethodResult: null
                 }
             },
             async mounted() {
+                // Determine the correct API host
+                // Use window.location.hostname for normal access,
+                // but also try host.docker.internal for Docker containers
+                const hostname = window.location.hostname === 'host.docker.internal'
+                    ? 'host.docker.internal'
+                    : window.location.hostname;
+                this.apiUrl = `http://${hostname}:8000`;
+
                 await this.loadProducts();
                 await this.loadFakeData();
                 await this.loadAvailablePaymentMethods();
@@ -713,6 +735,7 @@
                     try {
                         const response = await axios.get(`${this.apiUrl}/available-payment-methods`);
                         this.availablePaymentMethods = response.data.available;
+                        this.registeredPaymentMethods = response.data.registered;
                     } catch (error) {
                         console.error('Error loading available payment methods:', error);
                     }

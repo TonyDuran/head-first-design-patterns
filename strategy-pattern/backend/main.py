@@ -145,7 +145,13 @@ async def get_available_payment_methods():
             for method_id, details in available_payment_methods.items()
             if method_id not in registered_payment_methods
         ],
-        "registered": list(registered_payment_methods.values())
+        "registered": [
+            {
+                "id": method_id,
+                "name": method_name
+            }
+            for method_id, method_name in registered_payment_methods.items()
+        ]
     }
 
 
@@ -323,6 +329,12 @@ async def checkout(payment_request: PaymentRequest):
             raise HTTPException(status_code=400, detail="Bitcoin details required")
         strategy = BitcoinPayment(
             wallet_address=payment_request.bitcoin.wallet_address
+        )
+    elif payment_request.payment_method in registered_payment_methods:
+        # Handle dynamically registered payment methods
+        strategy = DynamicPaymentStrategy(
+            method_name=payment_request.payment_method,
+            account_identifier="dynamic-account-" + payment_request.payment_method
         )
     else:
         raise HTTPException(status_code=400, detail=f"Unknown payment method: {payment_request.payment_method}")
