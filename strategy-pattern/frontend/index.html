@@ -469,7 +469,7 @@
             <!-- Payment Section -->
             <div class="section" v-if="cart.items.length > 0">
                 <h2>💳 Payment Method</h2>
-                
+
                 <!-- Toggle Pattern Mode -->
                 <div class="toggle-pattern">
                     <input type="checkbox" id="useBadExample" v-model="useBadExample">
@@ -478,10 +478,53 @@
                     </label>
                 </div>
 
+                <!-- Add New Payment Method Section -->
+                <div style="background: #e7f3ff; border: 2px solid #0066cc; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: #0066cc; margin-top: 0;">⚡ Add New Payment Method (Live Demo)</h3>
+                    <p style="color: #333; margin-bottom: 15px;">Click a button below to see the difference between the Strategy Pattern and without it:</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                        <button v-for="method in availablePaymentMethods"
+                                :key="method.id"
+                                @click="addPaymentMethod(method.id)"
+                                style="padding: 15px; border: 2px solid #0066cc; background: white; border-radius: 8px; cursor: pointer; font-size: 0.9em; transition: all 0.3s;"
+                                @mouseover="$event.target.style.background = '#e7f3ff'"
+                                @mouseout="$event.target.style.background = 'white'">
+                            <div style="font-size: 1.5em; margin-bottom: 5px;">{{ method.icon }}</div>
+                            {{ method.name }}
+                        </button>
+                    </div>
+
+                    <div v-if="paymentMethodResult"
+                         :style="{
+                             background: paymentMethodResult.success ? '#d4edda' : '#f8d7da',
+                             border: paymentMethodResult.success ? '2px solid #28a745' : '2px solid #dc3545',
+                             borderRadius: '8px',
+                             padding: '15px',
+                             marginTop: '10px'
+                         }">
+                        <div v-if="paymentMethodResult.success" style="color: #28a745;">
+                            <strong>✅ {{ paymentMethodResult.message }}</strong>
+                            <p style="margin: 10px 0 0 0; color: #333;">{{ paymentMethodResult.pattern_benefit }}</p>
+                            <ul style="margin: 10px 0 0 0; color: #333; padding-left: 20px;">
+                                <li v-for="benefit in paymentMethodResult.why_it_works" :key="benefit">{{ benefit }}</li>
+                            </ul>
+                        </div>
+                        <div v-else style="color: #dc3545;">
+                            <strong>❌ {{ paymentMethodResult.error }}</strong>
+                            <p style="margin: 10px 0; color: #333;"><strong>{{ paymentMethodResult.reason }}</strong></p>
+                            <ol style="margin: 10px 0 0 0; color: #333;">
+                                <li v-for="step in paymentMethodResult.steps" :key="step">{{ step }}</li>
+                            </ol>
+                            <p style="margin: 10px 0 0 0; color: #dc3545;"><strong>Pattern Violation:</strong> {{ paymentMethodResult.pattern_violation }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Payment Methods -->
                 <div class="payment-methods">
                     <!-- Credit Card -->
-                    <div class="payment-option" 
+                    <div class="payment-option"
                          :class="{ selected: paymentMethod === 'credit_card' }"
                          @click="paymentMethod = 'credit_card'">
                         <h3>💳 Credit Card</h3>
@@ -506,7 +549,7 @@
                     </div>
 
                     <!-- PayPal -->
-                    <div class="payment-option" 
+                    <div class="payment-option"
                          :class="{ selected: paymentMethod === 'paypal' }"
                          @click="paymentMethod = 'paypal'">
                         <h3>💰 PayPal</h3>
@@ -523,7 +566,7 @@
                     </div>
 
                     <!-- Bitcoin -->
-                    <div class="payment-option" 
+                    <div class="payment-option"
                          :class="{ selected: paymentMethod === 'bitcoin' }"
                          @click="paymentMethod = 'bitcoin'">
                         <h3>₿ Bitcoin</h3>
@@ -536,8 +579,8 @@
                     </div>
                 </div>
 
-                <button class="checkout-btn" 
-                        @click="checkout" 
+                <button class="checkout-btn"
+                        @click="checkout"
                         :disabled="!paymentMethod || processing">
                     {{ processing ? 'Processing...' : 'Checkout Now' }}
                 </button>
@@ -576,9 +619,9 @@
             <div class="result-content" @click.stop>
                 <div v-if="result.success" class="result-success">✅</div>
                 <div v-else class="result-error">❌</div>
-                
+
                 <h2>{{ result.success ? 'Payment Successful!' : 'Payment Failed' }}</h2>
-                
+
                 <div class="result-details">
                     <h4>Transaction Details</h4>
                     <div class="result-list">
@@ -636,11 +679,15 @@
                     processing: false,
                     showResult: false,
                     result: {},
-                    apiUrl: 'http://localhost:8000'
+                    apiUrl: 'http://localhost:8000',
+                    availablePaymentMethods: [],
+                    paymentMethodResult: null
                 }
             },
             async mounted() {
                 await this.loadProducts();
+                await this.loadFakeData();
+                await this.loadAvailablePaymentMethods();
             },
             methods: {
                 async loadProducts() {
@@ -649,6 +696,45 @@
                         this.products = response.data;
                     } catch (error) {
                         console.error('Error loading products:', error);
+                    }
+                },
+                async loadFakeData() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/fake-data`);
+                        const fakeData = response.data;
+                        this.creditCard = fakeData.credit_card;
+                        this.paypal = fakeData.paypal;
+                        this.bitcoin = fakeData.bitcoin;
+                    } catch (error) {
+                        console.error('Error loading fake data:', error);
+                    }
+                },
+                async loadAvailablePaymentMethods() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/available-payment-methods`);
+                        this.availablePaymentMethods = response.data.available;
+                    } catch (error) {
+                        console.error('Error loading available payment methods:', error);
+                    }
+                },
+                async addPaymentMethod(methodId) {
+                    try {
+                        const response = await axios.post(`${this.apiUrl}/add-payment-method`, {
+                            method_id: methodId,
+                            use_bad_example: this.useBadExample
+                        });
+                        this.paymentMethodResult = response.data;
+
+                        // Reload available methods if successful
+                        if (response.data.success) {
+                            await this.loadAvailablePaymentMethods();
+                        }
+                    } catch (error) {
+                        console.error('Error adding payment method:', error);
+                        this.paymentMethodResult = {
+                            success: false,
+                            error: error.response?.data?.detail || 'An error occurred'
+                        };
                     }
                 },
                 async addToCart(product) {

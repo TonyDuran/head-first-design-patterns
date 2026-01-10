@@ -13,12 +13,12 @@ from datetime import datetime
 
 class PaymentStrategy(ABC):
     """Abstract base class for payment strategies (The Strategy Interface)"""
-    
+
     @abstractmethod
     def pay(self, amount: float) -> Dict[str, Any]:
         """Process payment and return result"""
         pass
-    
+
     @abstractmethod
     def get_payment_details(self) -> str:
         """Get human-readable payment method details"""
@@ -27,13 +27,13 @@ class PaymentStrategy(ABC):
 
 class CreditCardPayment(PaymentStrategy):
     """Concrete Strategy: Credit Card Payment"""
-    
+
     def __init__(self, card_number: str, card_holder: str, cvv: str, expiry: str):
         self.card_number = card_number
         self.card_holder = card_holder
         self.cvv = cvv
         self.expiry = expiry
-    
+
     def pay(self, amount: float) -> Dict[str, Any]:
         # Simulate payment processing
         masked_card = f"****-****-****-{self.card_number[-4:]}"
@@ -45,7 +45,7 @@ class CreditCardPayment(PaymentStrategy):
             "details": f"Charged {masked_card}",
             "timestamp": datetime.now().isoformat()
         }
-    
+
     def get_payment_details(self) -> str:
         masked_card = f"****-****-****-{self.card_number[-4:]}"
         return f"Credit Card ending in {self.card_number[-4:]}"
@@ -53,11 +53,11 @@ class CreditCardPayment(PaymentStrategy):
 
 class PayPalPayment(PaymentStrategy):
     """Concrete Strategy: PayPal Payment"""
-    
+
     def __init__(self, email: str, password: str):
         self.email = email
         self.password = password
-    
+
     def pay(self, amount: float) -> Dict[str, Any]:
         # Simulate PayPal payment processing
         return {
@@ -68,17 +68,17 @@ class PayPalPayment(PaymentStrategy):
             "details": f"Charged PayPal account {self.email}",
             "timestamp": datetime.now().isoformat()
         }
-    
+
     def get_payment_details(self) -> str:
         return f"PayPal account {self.email}"
 
 
 class BitcoinPayment(PaymentStrategy):
     """Concrete Strategy: Bitcoin Payment"""
-    
+
     def __init__(self, wallet_address: str):
         self.wallet_address = wallet_address
-    
+
     def pay(self, amount: float) -> Dict[str, Any]:
         # Simulate Bitcoin payment processing
         btc_amount = amount / 45000  # Fake conversion rate
@@ -91,18 +91,39 @@ class BitcoinPayment(PaymentStrategy):
             "details": f"Transferred {btc_amount:.8f} BTC to {self.wallet_address[:8]}...",
             "timestamp": datetime.now().isoformat()
         }
-    
+
     def get_payment_details(self) -> str:
         return f"Bitcoin wallet {self.wallet_address[:8]}...{self.wallet_address[-4:]}"
 
 
+class DynamicPaymentStrategy(PaymentStrategy):
+    """Concrete Strategy: A dynamically added payment method (shows Strategy Pattern flexibility)"""
+
+    def __init__(self, method_name: str, account_identifier: str):
+        self.method_name = method_name
+        self.account_identifier = account_identifier
+
+    def pay(self, amount: float) -> Dict[str, Any]:
+        return {
+            "success": True,
+            "method": self.method_name,
+            "amount": amount,
+            "transaction_id": f"{self.method_name[:3].upper()}-{datetime.now().timestamp()}",
+            "details": f"Charged {self.method_name} account {self.account_identifier}",
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def get_payment_details(self) -> str:
+        return f"{self.method_name} account {self.account_identifier}"
+
+
 class ShoppingCart:
     """Context class that uses a PaymentStrategy"""
-    
+
     def __init__(self):
         self.items = []
         self.payment_strategy: PaymentStrategy = None
-    
+
     def add_item(self, name: str, price: float, quantity: int = 1):
         """Add item to cart"""
         self.items.append({
@@ -110,15 +131,15 @@ class ShoppingCart:
             "price": price,
             "quantity": quantity
         })
-    
+
     def get_total(self) -> float:
         """Calculate total price"""
         return sum(item["price"] * item["quantity"] for item in self.items)
-    
+
     def set_payment_strategy(self, strategy: PaymentStrategy):
         """Set the payment strategy (Strategy Pattern in action!)"""
         self.payment_strategy = strategy
-    
+
     def checkout(self) -> Dict[str, Any]:
         """Process checkout using the selected payment strategy"""
         if not self.payment_strategy:
@@ -126,16 +147,16 @@ class ShoppingCart:
                 "success": False,
                 "error": "No payment method selected"
             }
-        
+
         if not self.items:
             return {
                 "success": False,
                 "error": "Cart is empty"
             }
-        
+
         total = self.get_total()
         payment_result = self.payment_strategy.pay(total)
-        
+
         return {
             **payment_result,
             "items": self.items,
@@ -147,23 +168,23 @@ class ShoppingCart:
 class BadShoppingCart:
     """
     This is a BAD example showing what happens WITHOUT the Strategy Pattern.
-    
+
     Problems:
     1. Violates Open/Closed Principle - need to modify class to add new payment methods
     2. Tight coupling between cart and payment methods
     3. Hard to test individual payment methods
     4. Large, complex conditional logic
     """
-    
+
     def __init__(self):
         self.items = []
-    
+
     def add_item(self, name: str, price: float, quantity: int = 1):
         self.items.append({"name": name, "price": price, "quantity": quantity})
-    
+
     def get_total(self) -> float:
         return sum(item["price"] * item["quantity"] for item in self.items)
-    
+
     def checkout(self, payment_type: str, payment_details: Dict[str, str]) -> Dict[str, Any]:
         """
         BAD: All payment logic in one method with if/else statements
@@ -171,9 +192,9 @@ class BadShoppingCart:
         """
         if not self.items:
             return {"success": False, "error": "Cart is empty"}
-        
+
         total = self.get_total()
-        
+
         # BAD: Large conditional block for each payment type
         if payment_type == "credit_card":
             card_number = payment_details.get("card_number", "")
