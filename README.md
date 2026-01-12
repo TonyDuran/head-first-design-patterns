@@ -25,6 +25,12 @@ These examples are designed to **supplement and reinforce** the patterns you lea
 **What it demonstrates:** The Strategy Pattern with a payment processing system in an e-commerce store.
 **Learn more:** See [strategy-pattern/README.md](strategy-pattern/README.md)
 
+### 2. Observer Pattern
+📁 **Folder:** `observer-pattern/`
+
+**What it demonstrates:** The Observer Pattern with a multiplayer snake game. Compare push-based WebSocket (GOOD) vs pull-based polling (BAD) for real-time updates.
+**Learn more:** See [observer-pattern/README.md](observer-pattern/README.md)
+
 
 ## 🚀 Quick Start
 
