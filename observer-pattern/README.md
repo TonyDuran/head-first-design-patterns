@@ -2,6 +2,10 @@
 
 An interactive demonstration of the **Observer Pattern** using WebSocket (push) vs HTTP polling (pull) for real-time updates.
 
+<img width="1557" height="981" alt="image" src="https://github.com/user-attachments/assets/ac81b218-cf95-4f1e-8fdb-bc055d7a3c2f" />
+
+1-Player with many Specatators. The player can control whether the game is in real-time or delayed for spectators. 
+
 ## The Pattern
 
 **Observer Pattern**: Objects (subjects) notify multiple observers of state changes automatically.
