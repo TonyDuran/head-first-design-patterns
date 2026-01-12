@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observer Pattern - Snake Game</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .game-board {
+            background: #1a1a2e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            width: 100%;
+            aspect-ratio: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            grid-template-rows: repeat(20, 1fr);
+            width: 100%;
+            height: 100%;
+            gap: 1px;
+            background: #1a1a2e;
+            padding: 2px;
+        }
+
+        .cell {
+            background: #2d2d44;
+            border: 1px solid #3d3d5c;
+        }
+
+        .cell.snake {
+            background: #4eca64;
+            box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell.snake-head {
+            background: #2ecc71;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
+        }
+
+        .cell.fruit {
+            background: #e74c3c;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .btn-arrow {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-arrow:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        .btn-arrow:active {
+            transform: scale(0.95);
+        }
+
+        .btn-reset {
+            grid-column: 1 / -1;
+            background: #e74c3c;
+            color: white;
+            padding: 12px;
+        }
+
+        .btn-reset:hover {
+            background: #c0392b;
+        }
+
+        .mode-toggle {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 24px;
+            background: #ddd;
+            border-radius: 12px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #2ecc71;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 28px;
+        }
+
+        .mode-info {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .spectator-info {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #ffc107;
+            font-size: 12px;
+            color: #856404;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #f5c6cb;
+        }
+
+        .status.loading {
+            background: #e2e3e5;
+            color: #383d41;
+            border-left: 4px solid #d6d8db;
+        }
+
+        .game-over-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .modal-content h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        .btn-play {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .btn-play:hover {
+            background: #27ae60;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        .mode-badge.good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .mode-badge.bad {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .lag-indicator {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .lag-indicator.high {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <header>
+                <h1>🐍 Snake Game - Observer Pattern</h1>
+                <p class="subtitle">Compare GOOD (Push/WebSocket) vs BAD (Pull/Polling) approaches</p>
+            </header>
+
+            <div class="content">
+                <!-- Player Section -->
+                <div class="section" v-if="isPlayer">
+                    <h2 class="section-title">🎮 Player</h2>
+                    <div class="game-board">
+                        <div class="game-grid">
+                            <div v-for="(cell, idx) in gameGrid"
+                                 :key="idx"
+                                 :class="{
+                                     cell: true,
+                                     snake: cell.type === 'snake' && cell.part !== 'head',
+                                     'snake-head': cell.type === 'snake' && cell.part === 'head',
+                                     fruit: cell.type === 'fruit'
+                                 }">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-label">Score</div>
+                            <div class="stat-value">{{ currentState.score }}</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">High Score</div>
+                            <div class="stat-value">{{ currentState.high_score }}</div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <div></div>
+                        <button class="btn-arrow" @click="moveSnake('UP')">⬆️</button>
+                        <div></div>
+                        <button class="btn-arrow" @click="moveSnake('LEFT')">⬅️</button>
+                        <button class="btn-arrow" @click="moveSnake('DOWN')">⬇️</button>
+                        <button class="btn-arrow" @click="moveSnake('RIGHT')">➡️</button>
+                        <button class="btn-reset" @click="resetGame">Reset Game</button>
+                        <button class="btn-reset" @click="toggleGameState" style="background: #2ecc71; margin-top: 10px;">
+                            {{ gameOver ? '▶️ Play Again' : (gameStarted ? '⏸️ Pause' : '▶️ Start Game') }}
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 12px; background: #f0f4ff; border-radius: 6px; border-left: 4px solid #667eea;" v-if="isPlayer">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">⚡ Game Speed</label>
+                        <input type="range" min="0.1" max="2.0" step="0.1" v-model.number="gameSpeed" @input="updateSpeed" style="width: 100%; cursor: pointer;">
+                        <div style="font-size: 12px; color: #666; margin-top: 5px; text-align: center;">{{ gameSpeed.toFixed(1) }}s per move ({{ (1/gameSpeed).toFixed(1) }} moves/sec)</div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 12px; background: #ffe6e6; border-radius: 6px; border-left: 4px solid #e74c3c;" v-if="isPlayer && !usePushUpdates">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">🐌 Polling Delay (BAD Mode)</label>
+                        <input type="range" min="0" max="2000" step="50" v-model.number="pollingDelay" @input="updatePollingDelay" style="width: 100%; cursor: pointer;">
+                        <div style="font-size: 12px; color: #666; margin-top: 5px; text-align: center;">{{ pollingDelay }}ms artificial delay</div>
+                    </div>
+
+                    <div class="mode-toggle" v-if="isPlayer">
+                        <label class="toggle-label" @click="toggleMode">
+                            <span>Push Updates (WebSocket) - GOOD</span>
+                            <div :class="{ 'toggle-switch': true, active: usePushUpdates }"></div>
+                        </label>
+                        <div class="mode-info">
+                            <span class="mode-badge" :class="usePushUpdates ? 'good' : 'bad'">
+                                {{ usePushUpdates ? 'Good (Push)' : 'Bad (Polling)' }}
+                            </span>
+                            <p style="margin-top: 8px;">
+                                {{ usePushUpdates ?
+                                    'Spectators receive updates instantly via WebSocket' :
+                                    'Spectators poll the server every 500ms for updates' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="status connected">
+                        ✓ Player connected - {{ spectatorCount }} spectator(s) watching
+                    </div>
+                </div>
+
+                <!-- Spectator Section -->
+                <div class="section" v-else>
+                    <h2 class="section-title">👁️ Spectator</h2>
+                    <div class="game-board">
+                        <div class="game-grid">
+                            <div v-for="(cell, idx) in gameGrid"
+                                 :key="idx"
+                                 :class="{
+                                     cell: true,
+                                     snake: cell.type === 'snake' && cell.part !== 'head',
+                                     'snake-head': cell.type === 'snake' && cell.part === 'head',
+                                     fruit: cell.type === 'fruit'
+                                 }">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-label">Score</div>
+                            <div class="stat-value">{{ currentState.score }}</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">High Score</div>
+                            <div class="stat-value">{{ currentState.high_score }}</div>
+                        </div>
+                    </div>
+
+                    <div class="spectator-info">
+                        <strong>You are spectating</strong><br>
+                        The player controls whether you receive GOOD (push) or BAD (polling) updates.
+                    </div>
+
+                    <div class="mode-toggle" v-if="!isPlayer">
+                        <div style="margin-bottom: 10px;">
+                            <strong>Update Mode:</strong>
+                            <span class="mode-badge" :class="usePushUpdates ? 'good' : 'bad'" style="margin-left: 10px;">
+                                {{ usePushUpdates ? 'Good (Push)' : 'Bad (Polling)' }}
+                            </span>
+                        </div>
+                        <div class="mode-info">
+                            <p style="margin: 0;">
+                                {{ usePushUpdates ?
+                                    'Receiving instant updates via WebSocket' :
+                                    'Polling the server every 500ms (notice the lag!)' }}
+                            </p>
+                            <div class="lag-indicator" :class="{ high: lagMs > 300 }">
+                                Last update: {{ lagMs }}ms ago
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status" :class="connectionStatus">
+                        {{ statusMessage }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Over Modal -->
+            <div class="game-over-modal" v-if="currentState.game_over && isPlayer">
+                <div class="modal-content">
+                    <h2>Game Over!</h2>
+                    <p>Final Score: <strong>{{ currentState.score }}</strong></p>
+                    <p v-if="currentState.score === currentState.high_score">🎉 New High Score!</p>
+                    <p v-else>High Score: {{ currentState.high_score }}</p>
+                    <button class="btn-play" @click="resetGame">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isPlayer: false,
+                    currentState: {
+                        snake: [],
+                        fruit: { x: 0, y: 0 },
+                        score: 0,
+                        game_over: false,
+                        direction: 'RIGHT',
+                        high_score: 0
+                    },
+                    usePushUpdates: true,
+                    spectatorCount: 0,
+                    gameSpeed: 0.5,
+                    pollingDelay: 100,
+                    gameStarted: false,
+                    ws: null,
+                    pollInterval: null,
+                    apiBase: '',
+                    lastUpdateTime: Date.now(),
+                    lagMs: 0,
+                    connectionStatus: 'loading',
+                    statusMessage: 'Connecting...'
+                }
+            },
+            computed: {
+                gameGrid() {
+                    const grid = Array(400).fill(null).map(() => ({ type: null, part: null }));
+
+                    // Place snake
+                    this.currentState.snake.forEach((segment, idx) => {
+                        const cellIdx = segment.y * 20 + segment.x;
+                        if (cellIdx >= 0 && cellIdx < 400) {
+                            grid[cellIdx] = {
+                                type: 'snake',
+                                part: idx === 0 ? 'head' : 'body'
+                            };
+                        }
+                    });
+
+                    // Place fruit
+                    const fruitIdx = this.currentState.fruit.y * 20 + this.currentState.fruit.x;
+                    if (fruitIdx >= 0 && fruitIdx < 400) {
+                        grid[fruitIdx] = { type: 'fruit', part: null };
+                    }
+
+                    return grid;
+                }
+            },
+            async mounted() {
+                // Determine API base
+                const hostname = window.location.hostname;
+                const port = '8000';
+                this.apiBase = `http://${hostname}:${port}`;
+
+                // Determine if player or spectator from URL
+                this.isPlayer = window.location.pathname.includes('player');
+
+                if (this.isPlayer) {
+                    await this.connectAsPlayer();
+                    // Add keyboard controls for player (Arrow keys and WASD)
+                    window.addEventListener('keydown', (e) => {
+                        const keyMap = {
+                            'ArrowUp': 'UP',
+                            'ArrowDown': 'DOWN',
+                            'ArrowLeft': 'LEFT',
+                            'ArrowRight': 'RIGHT',
+                            'w': 'UP',
+                            'W': 'UP',
+                            'a': 'LEFT',
+                            'A': 'LEFT',
+                            's': 'DOWN',
+                            'S': 'DOWN',
+                            'd': 'RIGHT',
+                            'D': 'RIGHT'
+                        };
+                        if (keyMap[e.key]) {
+                            e.preventDefault();
+                            this.moveSnake(keyMap[e.key]);
+                        }
+                    });
+                } else {
+                    await this.connectAsSpectator();
+                }
+            },
+            methods: {
+                async connectAsPlayer() {
+                    try {
+                        const res = await fetch(`${this.apiBase}/api/player/connect`, { method: 'POST' });
+                        if (!res.ok) {
+                            console.error('Failed to connect as player');
+                            this.statusMessage = '✗ Failed to connect';
+                            return;
+                        }
+                        // Initial state fetch
+                        this.fetchState();
+                        this.statusMessage = '✓ You are the player! Press "Start Game" to begin.';
+
+                        // Poll spectator count every 1 second
+                        setInterval(() => {
+                            fetch(`${this.apiBase}/api/player/spectator-count`)
+                                .then(r => r.json())
+                                .then(data => { this.spectatorCount = data.spectator_count; })
+                                .catch(() => {});
+                        }, 1000);
+
+                        // Player always gets instant updates via WebSocket (unaffected by toggle)
+                        this.playerWebSocket();
+                    } catch (e) {
+                        console.error('Failed to connect as player:', e);
+                        this.statusMessage = '✗ Connection error';
+                    }
+                },
+                async toggleGameState() {
+                    try {
+                        if (this.gameOver) {
+                            // Game over -> reset and start
+                            await fetch(`${this.apiBase}/api/player/reset`, { method: 'POST' });
+                            await fetch(`${this.apiBase}/api/player/start`, { method: 'POST' });
+                            this.gameStarted = true;
+                        } else if (this.gameStarted) {
+                            // Running -> pause
+                            await fetch(`${this.apiBase}/api/player/pause`, { method: 'POST' });
+                            this.gameStarted = false;
+                        } else {
+                            // Paused -> resume
+                            await fetch(`${this.apiBase}/api/player/resume`, { method: 'POST' });
+                            this.gameStarted = true;
+                        }
+                    } catch (e) {
+                        console.error('Failed to toggle game state:', e);
+                    }
+                },
+                playerWebSocket() {
+                    // Player always gets real-time updates, not affected by GOOD/BAD toggle
+                    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+                    const hostname = window.location.hostname;
+                    const wsUrl = `${wsProtocol}://${hostname}:8000/ws/spectate`;
+
+                    this.ws = new WebSocket(wsUrl);
+                    this.ws.onopen = () => {
+                        console.log('Player connected to real-time updates');
+                    };
+                    this.ws.onmessage = (event) => {
+                        const message = JSON.parse(event.data);
+                        if (message.type === 'game_state') {
+                            this.currentState = message.data;
+                        }
+                    };
+                    this.ws.onerror = () => {
+                        console.error('Player WebSocket error');
+                    };
+                },
+                async connectAsSpectator() {
+                    // Fetch initial mode from server
+                    try {
+                        const res = await fetch(`${this.apiBase}/api/mode`);
+                        const data = await res.json();
+                        this.usePushUpdates = data.use_push_updates;
+                    } catch (e) {
+                        console.error('Failed to get mode:', e);
+                    }
+
+                    if (this.usePushUpdates) {
+                        this.connectWebSocket();
+                    } else {
+                        this.startPolling();
+                    }
+
+                    // Check for mode changes every 2 seconds
+                    setInterval(async () => {
+                        try {
+                            const res = await fetch(`${this.apiBase}/api/mode`);
+                            const data = await res.json();
+                            if (data.use_push_updates !== this.usePushUpdates) {
+                                // Mode changed, reconnect with new method
+                                this.usePushUpdates = data.use_push_updates;
+                                if (this.usePushUpdates) {
+                                    if (this.pollInterval) clearInterval(this.pollInterval);
+                                    if (this.ws) this.ws.close();
+                                    this.connectWebSocket();
+                                } else {
+                                    if (this.ws) this.ws.close();
+                                    this.startPolling();
+                                }
+                            }
+                        } catch (e) {
+                            // Silently ignore errors during mode check
+                        }
+                    }, 2000);
+                },
+                connectWebSocket() {
+                    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+                    const hostname = window.location.hostname;
+                    const wsUrl = `${wsProtocol}://${hostname}:8000/ws/spectate`;
+
+                    this.ws = new WebSocket(wsUrl);
+                    this.ws.onopen = () => {
+                        this.connectionStatus = 'connected';
+                        this.statusMessage = '✓ Connected via WebSocket (GOOD)';
+                    };
+                    this.ws.onmessage = (event) => {
+                        const message = JSON.parse(event.data);
+                        if (message.type === 'game_state') {
+                            this.currentState = message.data;
+                            this.lastUpdateTime = Date.now();
+                            this.lagMs = 0;
+                        }
+                    };
+                    this.ws.onerror = () => {
+                        this.connectionStatus = 'disconnected';
+                        this.statusMessage = '✗ WebSocket connection error';
+                    };
+                    this.ws.onclose = () => {
+                        this.connectionStatus = 'disconnected';
+                        this.statusMessage = '✗ Disconnected from server';
+                    };
+                },
+                startPolling() {
+                    this.connectionStatus = 'connected';
+                    this.statusMessage = '✓ Polling from server (BAD)';
+                    if (this.ws) {
+                        this.ws.close();
+                        this.ws = null;
+                    }
+                    this.fetchState();
+                    this.pollInterval = setInterval(() => {
+                        this.fetchState();
+                        this.lagMs = Date.now() - this.lastUpdateTime;
+                    }, 1000);
+                },
+                async fetchState() {
+                    try {
+                        const res = await fetch(`${this.apiBase}/api/state`);
+                        const data = await res.json();
+                        this.currentState = data;
+                        this.lastUpdateTime = Date.now();
+                    } catch (e) {
+                        console.error('Failed to fetch state:', e);
+                        this.connectionStatus = 'disconnected';
+                        this.statusMessage = '✗ Failed to fetch state';
+                    }
+                },
+                async moveSnake(direction) {
+                    try {
+                        await fetch(`${this.apiBase}/api/player/direction/${direction}`, { method: 'POST' });
+                    } catch (e) {
+                        console.error('Failed to send direction:', e);
+                    }
+                },
+                async resetGame() {
+                    try {
+                        await fetch(`${this.apiBase}/api/player/reset`, { method: 'POST' });
+                        this.gameStarted = true;
+                    } catch (e) {
+                        console.error('Failed to reset game:', e);
+                    }
+                },
+                async updateSpeed() {
+                    try {
+                        await fetch(`${this.apiBase}/api/player/speed/${this.gameSpeed}`, { method: 'POST' });
+                    } catch (e) {
+                        console.error('Failed to update speed:', e);
+                    }
+                },
+                async updatePollingDelay() {
+                    try {
+                        await fetch(`${this.apiBase}/api/player/polling-delay/${this.pollingDelay}`, { method: 'POST' });
+                    } catch (e) {
+                        console.error('Failed to update polling delay:', e);
+                    }
+                },
+                toggleMode() {
+                    this.usePushUpdates = !this.usePushUpdates;
+                    if (this.isPlayer) {
+                        // Player sends toggle to server
+                        fetch(`${this.apiBase}/api/player/toggle-mode`, { method: 'POST' }).catch(() => {});
+                    } else {
+                        // Spectator switches their connection method
+                        if (this.usePushUpdates) {
+                            clearInterval(this.pollInterval);
+                            this.connectWebSocket();
+                        } else {
+                            if (this.ws) {
+                                this.ws.close();
+                                this.ws = null;
+                            }
+                            this.startPolling();
+                        }
+                    }
+                }
+            },
+            beforeUnmount() {
+                if (this.ws) this.ws.close();
+                if (this.pollInterval) clearInterval(this.pollInterval);
+                if (this.isPlayer) {
+                    fetch(`${this.apiBase}/api/player/disconnect`, { method: 'POST' }).catch(() => {});
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
